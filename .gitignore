@@ -1,0 +1,11 @@
+node_modules/
+.env
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+*.log
+.DS_Store
+
+performance/jmeter-report/
+performance/*.jtl
