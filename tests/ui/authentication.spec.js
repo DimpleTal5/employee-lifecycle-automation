@@ -10,6 +10,8 @@ test.describe('Authentication', () => {
       process.env.ORANGEHRM_PASSWORD
     );
 
-    await expect(dashboardPage.dashboardHeading).toBeVisible();
+    await expect(dashboardPage.page).toHaveURL(
+      /\/web\/index\.php\/dashboard\/index/
+    );
   });
 });

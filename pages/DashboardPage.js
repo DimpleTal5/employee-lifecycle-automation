@@ -4,28 +4,40 @@ class DashboardPage {
 
     this.dashboardHeading = page.getByRole('heading', {
       name: 'Dashboard',
+      exact: true,
+    });
+
+    this.adminMenu = page.getByRole('link', {
+      name: 'Admin',
     });
 
     this.pimMenu = page.getByRole('link', {
       name: 'PIM',
     });
 
-    this.adminMenu = page.getByRole('link', {
-      name: 'Admin',
+    this.leaveMenu = page.getByRole('link', {
+      name: 'Leave',
     });
-  }
 
-  async isDashboardVisible() {
-    return this.dashboardHeading.isVisible();
+    this.myInfoMenu = page.getByRole('link', {
+      name: 'My Info',
+    });
   }
 
   async openPIM() {
     await this.pimMenu.click();
-  }
 
-  async openAdmin() {
-    await this.adminMenu.click();
+    await this.page
+      .getByRole('heading', {
+        name: 'Employee Information',
+      })
+      .waitFor({
+        state: 'visible',
+        timeout: 30000,
+      });
   }
 }
 
-module.exports = { DashboardPage };
+module.exports = {
+  DashboardPage,
+};

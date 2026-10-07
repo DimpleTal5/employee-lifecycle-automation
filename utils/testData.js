@@ -1,12 +1,12 @@
 function createEmployeeData() {
-  const uniqueId = Date.now().toString().slice(-8);
+  const uniqueSuffix = Date.now().toString().slice(-6);
 
   return {
-    firstName: 'D1',
-    middleName: 'A1',
-    lastName: 'T1',
-    employeeId: uniqueId,
-    updatedLastName: 'T1U',
+    firstName: 'Dimple',
+    middleName: 'QA',
+    lastName: `Talreja_${uniqueSuffix}`,
+    employeeId: `EMP${uniqueSuffix}`,
+    updatedLastName: `TalrejaU_${uniqueSuffix}`,
   };
 }
 

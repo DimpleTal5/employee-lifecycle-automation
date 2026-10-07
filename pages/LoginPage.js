@@ -13,24 +13,37 @@ class LoginPage {
     this.loginButton = page.getByRole('button', {
       name: 'Login',
     });
-
-    this.loginError = page.locator('.oxd-alert-content-text');
   }
 
-  async goto() {
-    await this.page.goto('/web/index.php/auth/login');
-  }
+  async open() {
+    await this.page.goto('/web/index.php/auth/login', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000,
+    });
 
-  async login(username, password) {
-    await this.usernameInput.fill(username);
-    await this.passwordInput.fill(password);
-    await this.loginButton.click();
+    await this.usernameInput.waitFor({
+      state: 'visible',
+      timeout: 30000,
+    });
   }
 
   async loginAs(username, password) {
-    await this.goto();
-    await this.login(username, password);
+    await this.open();
+
+    await this.usernameInput.fill(username);
+    await this.passwordInput.fill(password);
+
+    await this.loginButton.click();
+
+    await this.page.waitForURL(
+      /\/web\/index\.php\/dashboard\/index/,
+      {
+        timeout: 30000,
+      }
+    );
   }
 }
 
-module.exports = { LoginPage };
+module.exports = {
+  LoginPage,
+};

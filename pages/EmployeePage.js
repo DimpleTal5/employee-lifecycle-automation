@@ -4,28 +4,58 @@ class EmployeePage {
   constructor(page) {
     this.page = page;
 
-    this.addEmployeeButton = page.getByRole('link', { name: 'Add Employee' });
-    this.firstNameInput = page.getByRole('textbox', { name: 'First Name' });
-    this.middleNameInput = page.getByRole('textbox', { name: 'Middle Name' });
-    this.lastNameInput = page.getByRole('textbox', { name: 'Last Name' });
+    this.addEmployeeButton = page.getByRole('link', {
+      name: 'Add Employee',
+    });
+
+    this.firstNameInput = page.getByRole('textbox', {
+      name: 'First Name',
+    });
+
+    this.middleNameInput = page.getByRole('textbox', {
+      name: 'Middle Name',
+    });
+
+    this.lastNameInput = page.getByRole('textbox', {
+      name: 'Last Name',
+    });
 
     this.employeeIdInput = page.locator('input.oxd-input').nth(4);
 
-    this.saveButton = page.getByRole('button', { name: 'Save' });
-    this.successMessage = page.getByText('Successfully Saved', { exact: true });
-    this.updatedMessage = page.getByText('Successfully Updated', { exact: true });
+    this.saveButton = page.getByRole('button', {
+      name: 'Save',
+    });
 
-    this.employeeListButton = page.getByRole('link', { name: 'Employee List' });
+    this.successMessage = page.getByText('Successfully Saved', {
+      exact: true,
+    });
+
+    this.updatedMessage = page.getByText('Successfully Updated', {
+      exact: true,
+    });
+
+    this.employeeListButton = page.getByRole('link', {
+      name: 'Employee List',
+    });
 
     this.employeeIdSearch = page.getByRole('textbox').nth(1);
 
-    this.searchButton = page.getByRole('button', { name: 'Search' });
-    this.resetButton = page.getByRole('button', { name: 'Reset' });
+    this.searchButton = page.getByRole('button', {
+      name: 'Search',
+    });
+
+    this.resetButton = page.getByRole('button', {
+      name: 'Reset',
+    });
   }
 
   async openAddEmployee() {
     await this.addEmployeeButton.click();
-    await this.firstNameInput.waitFor({ state: 'visible' });
+
+    await this.firstNameInput.waitFor({
+      state: 'visible',
+      timeout: 15000,
+    });
   }
 
   async createEmployee({
@@ -48,80 +78,146 @@ class EmployeePage {
 
     await this.saveButton.click();
 
+    await this.successMessage.waitFor({
+      state: 'visible',
+      timeout: 15000,
+    });
+
     return employeeId;
   }
 
   async openEmployeeList() {
     await this.employeeListButton.click();
 
+    await this.page.waitForLoadState('domcontentloaded', {
+      timeout: 30000,
+    });
+
     await this.page
-      .getByRole('heading', { name: 'Employee Information' })
-      .waitFor({ state: 'visible' });
+      .getByRole('heading', {
+        name: 'Employee Information',
+      })
+      .waitFor({
+        state: 'visible',
+        timeout: 30000,
+      });
   }
 
   async searchEmployeeById(employeeId) {
+    await this.employeeIdSearch.waitFor({
+      state: 'visible',
+      timeout: 15000,
+    });
+
     await this.employeeIdSearch.fill(employeeId);
+
     await this.searchButton.click();
 
     await this.page
       .locator('.oxd-table-body')
-      .waitFor({ state: 'visible' });
+      .waitFor({
+        state: 'visible',
+        timeout: 15000,
+      });
   }
 
   getEmployeeRow(lastName) {
-    return this.page.getByRole('row').filter({ hasText: lastName }).last();
+    return this.page
+      .getByRole('row')
+      .filter({
+        hasText: lastName,
+      })
+      .last();
   }
 
   async openEmployeeForEdit(lastName) {
     const row = this.getEmployeeRow(lastName);
 
-    await row.waitFor({ state: 'visible' });
-    await row.getByRole('button').first().click();
+    await row.waitFor({
+      state: 'visible',
+      timeout: 15000,
+    });
+
+    await row
+      .getByRole('button')
+      .first()
+      .click();
 
     await this.page
-      .getByRole('heading', { name: 'Personal Details' })
-      .waitFor({ state: 'visible' });
+      .getByRole('heading', {
+        name: 'Personal Details',
+      })
+      .waitFor({
+        state: 'visible',
+        timeout: 30000,
+      });
   }
 
-async updateLastName(newLastName) {
-  const lastNameField = this.page.getByRole('textbox', {
-    name: 'Last Name',
-  });
+  async updateLastName(newLastName) {
+    const lastNameField = this.page.getByRole('textbox', {
+      name: 'Last Name',
+    });
 
-  // Make sure the field is actually present
-  await lastNameField.waitFor({ state: 'visible' });
+    await lastNameField.waitFor({
+      state: 'visible',
+      timeout: 15000,
+    });
 
-  // Bring the field into view
-  await lastNameField.scrollIntoViewIfNeeded();
+    await lastNameField.scrollIntoViewIfNeeded();
 
-  // Clear the existing value and enter the new last name
-  await lastNameField.click();
-  await lastNameField.fill(newLastName);
+    await lastNameField.click();
 
-  // PROVE that Playwright entered the new value
-  await expect(lastNameField).toHaveValue(newLastName);
+    await lastNameField.fill(newLastName);
 
-  // Only after the field contains the new value, click Save
-  await this.page.getByRole('button', { name: 'Save' }).first().click();
+    await expect(lastNameField).toHaveValue(newLastName);
 
-  await this.updatedMessage.waitFor({ state: 'visible' });
+    await this.page
+      .getByRole('button', {
+        name: 'Save',
+      })
+      .first()
+      .click();
 
-  // Refresh after update
-  await this.page.reload();
+    await this.updatedMessage.waitFor({
+      state: 'visible',
+      timeout: 15000,
+    });
 
-  await this.page.getByRole('heading', {
-    name: 'Personal Details',
-  }).waitFor({ state: 'visible' });
-}
+    await this.page.reload();
+
+    await this.page
+      .getByRole('heading', {
+        name: 'Personal Details',
+      })
+      .waitFor({
+        state: 'visible',
+        timeout: 30000,
+      });
+  }
+
   async selectEmployee(lastName) {
-    const row = this.getEmployeeRowByLastName(lastName);
-    await row.getByRole('checkbox').check();
+    const row = this.getEmployeeRow(lastName);
+
+    await row
+      .getByRole('checkbox')
+      .check();
   }
 
   async deleteSelectedEmployee() {
-    await this.page.getByText('Delete Selected', { exact: true }).click();
-    await this.page.getByRole('button', { name: /Yes, Delete/i }).click();
+    await this.page
+      .getByText('Delete Selected', {
+        exact: true,
+      })
+      .click();
+
+    await this.page
+      .getByRole('button', {
+        name: /Yes, Delete/i,
+      })
+      .click();
   }
 }
 
-module.exports = { EmployeePage };
+module.exports = {
+  EmployeePage,
+};

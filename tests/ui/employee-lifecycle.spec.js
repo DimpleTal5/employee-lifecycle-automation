@@ -3,102 +3,273 @@ const { createEmployeeData } = require('../../utils/testData');
 const { ApiHelper } = require('../../utils/apiHelper');
 
 test.describe('Employee Lifecycle', () => {
-  test('@regression Admin can complete the employee lifecycle', async ({
-    loginPage,
-    dashboardPage,
-    employeePage,
-    page,
-  }) => {
-    const employee = createEmployeeData();
+  test(
+    'Admin can create an employee',
+    { tag: '@regression' },
+    async ({
+      loginPage,
+      dashboardPage,
+      employeePage,
+      employeeCleanup,
+      page,
+    }) => {
+      const employee = createEmployeeData();
 
-    await loginPage.loginAs(
-      process.env.ORANGEHRM_USERNAME,
-      process.env.ORANGEHRM_PASSWORD
-    );
+      await test.step('Login as Admin', async () => {
+        await loginPage.loginAs(
+          process.env.ORANGEHRM_USERNAME,
+          process.env.ORANGEHRM_PASSWORD
+        );
 
-    await expect(dashboardPage.dashboardHeading).toBeVisible();
-    await dashboardPage.openPIM();
+        await expect(dashboardPage.dashboardHeading).toBeVisible();
+      });
 
-    // CREATE - UI
-    await employeePage.openAddEmployee();
+      await test.step('Open PIM and create employee', async () => {
+        await dashboardPage.openPIM();
+        await employeePage.openAddEmployee();
 
-    const employeeId = await employeePage.createEmployee(employee);
+        await employeePage.createEmployee(employee);
 
-    await expect(employeePage.successMessage).toBeVisible();
+        await expect(employeePage.successMessage).toBeVisible();
+      });
 
-    // READ - UI
-    await employeePage.openEmployeeList();
-    await employeePage.searchEmployeeById(employeeId);
+      await test.step('Verify created employee through API', async () => {
+        const api = new ApiHelper(page.context().request);
 
-    await expect(
-      employeePage.getEmployeeRow(employee.lastName)
-    ).toBeVisible();
+        const createdEmployee = await api.findEmployeeByLastName(
+          employee.lastName
+        );
 
-    // API client using the authenticated browser context
-    const api = new ApiHelper(page.context().request);
+        expect(createdEmployee.firstName).toBe(employee.firstName);
+        expect(createdEmployee.lastName).toBe(employee.lastName);
+        expect(createdEmployee.employeeId).toBe(employee.employeeId);
 
-    // Find the employee created through the UI
-    const createdEmployee = await api.findEmployeeByLastName(
-      employee.lastName
-    );
+        employeeCleanup.register(createdEmployee.empNumber);
+      });
+    }
+  );
 
-    expect(createdEmployee.firstName).toBe(employee.firstName);
-    expect(createdEmployee.lastName).toBe(employee.lastName);
-    expect(createdEmployee.employeeId).toBeTruthy();
+  test(
+    'Admin can search and update an employee',
+    { tag: '@regression' },
+    async ({
+      loginPage,
+      dashboardPage,
+      employeePage,
+      employeeCleanup,
+      page,
+    }) => {
+      const employee = createEmployeeData();
 
-    // UPDATE - UI
-    await employeePage.openEmployeeForEdit(employee.lastName);
-await employeePage.updateLastName(employee.updatedLastName);
+      await test.step('Login as Admin', async () => {
+        await loginPage.loginAs(
+          process.env.ORANGEHRM_USERNAME,
+          process.env.ORANGEHRM_PASSWORD
+        );
 
+        await expect(dashboardPage.dashboardHeading).toBeVisible();
+      });
 
-    // READ AFTER UPDATE - UI
-    await employeePage.openEmployeeList();
-    await employeePage.searchEmployeeById(employeeId);
+      await test.step('Create employee for this test', async () => {
+        await dashboardPage.openPIM();
+        await employeePage.openAddEmployee();
 
-    await expect(
-      employeePage.getEmployeeRow(employee.updatedLastName)
-    ).toBeVisible();
+        await employeePage.createEmployee(employee);
 
-    // API VERIFICATION
-    const updatedEmployee = await api.findEmployeeByLastName(
-      employee.updatedLastName
-    );
+        await expect(employeePage.successMessage).toBeVisible();
+      });
 
-    expect(updatedEmployee).toHaveProperty('empNumber');
-    expect(updatedEmployee.firstName).toBe(employee.firstName);
-    expect(updatedEmployee.lastName).toBe(employee.updatedLastName);
-    expect(updatedEmployee.employeeId).toBe(employeeId);
+      const api = new ApiHelper(page.context().request);
 
-    const getResponse = await api.get(
-      `${api.basePath}/pim/employees/${updatedEmployee.empNumber}`
-    );
+      const createdEmployee = await test.step(
+        'Verify created employee through API',
+        async () => {
+          const result = await api.findEmployeeByLastName(
+            employee.lastName
+          );
 
-    expect(getResponse.status()).toBe(200);
+          expect(result.firstName).toBe(employee.firstName);
+          expect(result.lastName).toBe(employee.lastName);
 
-    const getBody = await getResponse.json();
+          employeeCleanup.register(result.empNumber);
 
-    expect(getBody.data.empNumber).toBe(updatedEmployee.empNumber);
-    expect(getBody.data.firstName).toBe(employee.firstName);
-    expect(getBody.data.lastName).toBe(employee.updatedLastName);
+          return result;
+        }
+      );
 
-    // DELETE - API
-    const deleteResponse = await api.delete(
-      `${api.basePath}/pim/employees`,
-      {
-        data: {
-          ids: [updatedEmployee.empNumber],
-        },
-      }
-    );
+      await test.step('Search for the employee', async () => {
+        await employeePage.openEmployeeList();
+        await employeePage.searchEmployeeById(employee.employeeId);
 
-    expect(deleteResponse.status()).toBe(200);
+        await expect(
+          employeePage.getEmployeeRow(employee.lastName)
+        ).toBeVisible();
+      });
 
-// VERIFY DELETE
-const verifyDeleteResponse = await api.get(
-  `${api.basePath}/pim/employees/${updatedEmployee.empNumber}`
-);
+      await test.step('Update employee last name', async () => {
+        await employeePage.openEmployeeForEdit(employee.lastName);
 
-expect(verifyDeleteResponse.status()).toBe(422);
+        await employeePage.updateLastName(employee.updatedLastName);
+      });
 
-  });
+      await test.step('Verify updated employee in UI', async () => {
+        await employeePage.openEmployeeList();
+        await employeePage.searchEmployeeById(employee.employeeId);
+
+        await expect(
+          employeePage.getEmployeeRow(employee.updatedLastName)
+        ).toBeVisible();
+      });
+
+      await test.step('Verify updated employee through API', async () => {
+        const updatedEmployee = await api.findEmployeeByLastName(
+          employee.updatedLastName
+        );
+
+        expect(updatedEmployee.firstName).toBe(employee.firstName);
+        expect(updatedEmployee.lastName).toBe(employee.updatedLastName);
+        expect(updatedEmployee.employeeId).toBe(employee.employeeId);
+      });
+
+      void createdEmployee;
+    }
+  );
+
+  test(
+    'Admin can verify an employee through API',
+    { tag: '@api' },
+    async ({
+      loginPage,
+      dashboardPage,
+      employeePage,
+      employeeCleanup,
+      page,
+    }) => {
+      const employee = createEmployeeData();
+
+      await test.step('Login as Admin', async () => {
+        await loginPage.loginAs(
+          process.env.ORANGEHRM_USERNAME,
+          process.env.ORANGEHRM_PASSWORD
+        );
+
+        await expect(dashboardPage.dashboardHeading).toBeVisible();
+      });
+
+      await test.step('Create employee through UI', async () => {
+        await dashboardPage.openPIM();
+        await employeePage.openAddEmployee();
+
+        await employeePage.createEmployee(employee);
+
+        await expect(employeePage.successMessage).toBeVisible();
+      });
+
+      const api = new ApiHelper(page.context().request);
+
+      const createdEmployee = await test.step(
+        'Find created employee through API',
+        async () => {
+          const result = await api.findEmployeeByLastName(
+            employee.lastName
+          );
+
+          expect(result.firstName).toBe(employee.firstName);
+          expect(result.lastName).toBe(employee.lastName);
+          expect(result.employeeId).toBe(employee.employeeId);
+
+          employeeCleanup.register(result.empNumber);
+
+          return result;
+        }
+      );
+
+      await test.step('Verify employee using employee endpoint', async () => {
+        const getResponse = await api.get(
+          `${api.basePath}/pim/employees/${createdEmployee.empNumber}`
+        );
+
+        expect(getResponse.status()).toBe(200);
+
+        const getBody = await getResponse.json();
+
+        expect(getBody.data.empNumber).toBe(createdEmployee.empNumber);
+        expect(getBody.data.firstName).toBe(employee.firstName);
+        expect(getBody.data.lastName).toBe(employee.lastName);
+        expect(getBody.data.employeeId).toBe(employee.employeeId);
+      });
+    }
+  );
+
+  test(
+    'Admin can delete an employee through API',
+    { tag: '@regression' },
+    async ({
+      loginPage,
+      dashboardPage,
+      employeePage,
+      employeeCleanup,
+      page,
+    }) => {
+      const employee = createEmployeeData();
+
+      await test.step('Login as Admin', async () => {
+        await loginPage.loginAs(
+          process.env.ORANGEHRM_USERNAME,
+          process.env.ORANGEHRM_PASSWORD
+        );
+
+        await expect(dashboardPage.dashboardHeading).toBeVisible();
+      });
+
+      await test.step('Create employee', async () => {
+        await dashboardPage.openPIM();
+        await employeePage.openAddEmployee();
+
+        await employeePage.createEmployee(employee);
+
+        await expect(employeePage.successMessage).toBeVisible();
+      });
+
+      const api = new ApiHelper(page.context().request);
+
+      const createdEmployee = await test.step(
+        'Find created employee through API',
+        async () => {
+          const result = await api.findEmployeeByLastName(
+            employee.lastName
+          );
+
+          expect(result.firstName).toBe(employee.firstName);
+          expect(result.lastName).toBe(employee.lastName);
+
+          return result;
+        }
+      );
+
+      await test.step('Delete employee through API', async () => {
+        const deleteResponse = await api.delete(
+          `${api.basePath}/pim/employees`,
+          {
+            data: {
+              ids: [createdEmployee.empNumber],
+            },
+          }
+        );
+
+        expect(deleteResponse.status()).toBe(200);
+      });
+
+      await test.step('Verify employee is deleted', async () => {
+        const verifyDeleteResponse = await api.get(
+          `${api.basePath}/pim/employees/${createdEmployee.empNumber}`
+        );
+
+        expect(verifyDeleteResponse.status()).toBe(422);
+      });
+
+      // This test deletes the employee itself.
+      void employeeCleanup;
+    }
+  );
 });
