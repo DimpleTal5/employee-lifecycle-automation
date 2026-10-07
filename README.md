@@ -1,8 +1,21 @@
 # OrangeHRM Employee Lifecycle Automation
 
-Senior QA Automation Engineer technical assessment project implementing a scalable UI and API automation framework using Playwright and JavaScript.
+Senior QA Automation Engineer technical assessment project implementing a maintainable UI and API automation framework using Playwright and JavaScript.
 
-The project automates an end-to-end employee lifecycle on the OrangeHRM demo application, with a focus on maintainability, reusable components, API validation, test stability, CI/CD execution, reporting, and performance testing.
+The framework automates an employee lifecycle on the OrangeHRM demo application and demonstrates:
+
+- Page Object Model
+- UI and API test automation
+- Role-based access validation
+- Reusable API utilities
+- Test fixtures and automatic cleanup
+- Unique test data generation
+- Environment-based configuration
+- Test tagging and step-level reporting
+- Retry and failure evidence
+- GitHub Actions CI/CD
+- HTML reports, screenshots, videos and traces
+- JMeter performance baseline
 
 ---
 
@@ -10,18 +23,19 @@ The project automates an end-to-end employee lifecycle on the OrangeHRM demo app
 
 OrangeHRM Open Source Demo:
 
-https://opensource-demo.orangehrmlive.com
+https://opensource-demo.orangehrmlive.com/
 
-The framework covers the following employee lifecycle:
+The automation covers:
 
-- Authentication
-- Employee creation
-- Employee search and validation
-- Role-based access validation
-- Employee update
-- API-level verification
-- Employee deletion
-- Post-deletion verification
+1. Authentication
+2. Employee creation
+3. Employee search
+4. Employee update
+5. Role-based access validation
+6. API-level employee verification
+7. Employee deletion
+8. Negative API validation
+9. Automatic test-data cleanup
 
 ---
 
@@ -42,7 +56,7 @@ The framework covers the following employee lifecycle:
 
 ## Framework Architecture
 
-The framework follows a layered structure that separates test scenarios, page interactions, reusable utilities, configuration, and test data.
+The project separates test scenarios, page interactions, reusable utilities, fixtures, configuration and test data.
 
 ```text
 employee-lifecycle-automation/
@@ -86,5 +100,6 @@ employee-lifecycle-automation/
 ├── .env.example
 ├── .gitignore
 ├── package.json
+├── package-lock.json
 ├── playwright.config.js
 └── README.md
